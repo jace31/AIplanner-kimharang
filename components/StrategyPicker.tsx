@@ -57,13 +57,13 @@ function Option({
         type="button"
         aria-pressed={selected}
         onClick={onSelect}
-        className={`mt-4 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+        className={`mt-4 rounded-lg px-4 py-2.5 text-sm font-bold transition ${
           selected
-            ? "bg-indigo-600 text-white"
-            : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+            ? "border-2 border-indigo-600 bg-white text-indigo-700"
+            : "border-2 border-indigo-600 bg-indigo-600 text-white shadow-sm hover:border-indigo-700 hover:bg-indigo-700"
         }`}
       >
-        {selected ? "선택됨" : "선택하기"}
+        {selected ? "✓ 선택됨" : "선택하기"}
       </button>
     </div>
   );

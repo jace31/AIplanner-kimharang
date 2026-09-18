@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CalibrationHelp } from "@/components/CalibrationHelp";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { Hero } from "@/components/Hero";
 import { MvpResult } from "@/components/MvpResult";
 import { PhasedResult } from "@/components/PhasedResult";
 import { PROVIDER_LABEL, PrdForm, type AnalyzeMode } from "@/components/PrdForm";
@@ -17,6 +18,12 @@ import { addRecords, clearRecords, getRecords, getServerRecords, removeRecord, s
 import { SAMPLE_ANALYSIS } from "@/lib/sampleAnalysis";
 import { SAMPLE_PRD, isSamplePrd } from "@/lib/samplePrd";
 import type { AnalyzedTask, PrdAnalysis } from "@/lib/types";
+
+type View = "planner" | "records";
+const TABS: { id: View; label: string }[] = [
+  { id: "planner", label: "결과 페이지" },
+  { id: "records", label: "실제 사용량 기록" },
+];
 
 const positive = (text: string): number | null => {
   const n = Number(text);
@@ -47,8 +54,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [strategy, setStrategy] = useState<Strategy | null>(null);
   const [analysisId, setAnalysisId] = useState(0);
-  // 화면 전환: 계획 화면 ↔ 실제 사용량 기록 화면 (두 화면 모두 마운트된 채 숨김 처리해 입력 중인 값을 유지한다)
-  const [view, setView] = useState<"planner" | "records">("planner");
+  // 상단 탭 메뉴: 결과 페이지 ↔ 실제 사용량 기록 (두 화면 모두 마운트된 채 숨김 처리해 입력 중인 값을 유지한다)
+  const [view, setView] = useState<View>("planner");
   // 사용량 기록 보정: 사용자가 직접 수정한 Task는 보정에서 제외한다
   const [calOn, setCalOn] = useState(true);
   const [manualIds, setManualIds] = useState<ReadonlySet<string>>(new Set());
@@ -115,9 +122,20 @@ export default function Home() {
     }
   }
 
-  function openView(next: "planner" | "records") {
+  function openView(next: View) {
     setView(next);
     window.scrollTo({ top: 0 });
+  }
+
+  /** 탭 키보드 조작: ←/→ 로 이동, Home/End 로 처음/끝 (선택된 탭만 Tab 키 순서에 들어간다) */
+  function onTabKeyDown(e: React.KeyboardEvent) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    const i = TABS.findIndex((t) => t.id === view);
+    const next =
+      e.key === "Home" ? 0 : e.key === "End" ? TABS.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + TABS.length) % TABS.length;
+    setView(TABS[next].id);
+    document.getElementById(`tab-${TABS[next].id}`)?.focus();
   }
 
   function editTask(id: string, patch: Partial<Pick<AnalyzedTask, "importance" | "usageMin" | "usageMax">>) {
@@ -140,37 +158,53 @@ export default function Home() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">AI Development Usage Planner</h1>
-          <p className="mt-1.5 text-slate-600">
-            내가 가진 제한된 AI 개발 사용량으로, 이 PRD를 어디까지 · 어떤 순서로 개발할 수 있을까?
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => openView("records")}
-          aria-current={view === "records" ? "page" : undefined}
-          className={`shrink-0 rounded-lg border px-3.5 py-2 text-sm font-semibold transition ${
-            view === "records"
-              ? "border-indigo-600 bg-indigo-600 text-white"
-              : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-          }`}
-        >
-          실제 사용량 기록
-          {recordSummary.count > 0 && (
-            <span
-              className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${
-                view === "records" ? "bg-white/25 text-white" : "bg-indigo-100 text-indigo-800"
-              }`}
-            >
-              {recordSummary.count}
-            </span>
-          )}
-        </button>
-      </header>
+      {/* 분석 전 첫 화면에서만 소개 문구와 흐름 그림을 크게 보여준다 */}
+      <Hero compact={view !== "planner" || analysis !== null} />
 
-      <div className="space-y-6" hidden={view !== "planner"}>
+      {/* 상단 메뉴: 결과 페이지 | 실제 사용량 기록 (스크롤해도 따라다닌다) */}
+      <nav className="sticky top-0 z-20 -mx-4 mb-6 border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6">
+        <div role="tablist" aria-label="화면 전환" onKeyDown={onTabKeyDown} className="flex gap-1">
+          {TABS.map((t) => {
+            const selected = view === t.id;
+            return (
+              <button
+                key={t.id}
+                id={`tab-${t.id}`}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                aria-controls={`panel-${t.id}`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => openView(t.id)}
+                className={`-mb-px whitespace-nowrap border-b-4 px-5 py-3 text-base font-bold transition ${
+                  selected
+                    ? "border-indigo-600 text-indigo-700"
+                    : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800"
+                }`}
+              >
+                {t.label}
+                {t.id === "records" && recordSummary.count > 0 && (
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-xs font-bold ${
+                      selected ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-700"
+                    }`}
+                  >
+                    {recordSummary.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div
+        id="panel-planner"
+        role="tabpanel"
+        aria-labelledby="tab-planner"
+        className="space-y-6"
+        hidden={view !== "planner"}
+      >
         {!analysis ? (
           <PrdForm
             prd={prd}
@@ -264,7 +298,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div hidden={view !== "records"}>
+      <div id="panel-records" role="tabpanel" aria-labelledby="tab-records" hidden={view !== "records"}>
         <FeedbackPanel
           key={analysisId}
           project={analysis?.projectName ?? ""}

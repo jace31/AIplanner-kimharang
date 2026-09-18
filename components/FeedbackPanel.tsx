@@ -24,7 +24,7 @@ interface Props {
   onSave: (records: UsageRecord[]) => void;
   onRemove: (id: string) => void;
   onClear: () => void;
-  /** 계획 화면으로 돌아가기 */
+  /** 결과 페이지 탭으로 이동 */
   onBack: () => void;
 }
 
@@ -86,13 +86,6 @@ export function FeedbackPanel({ project, rows, records, onSave, onRemove, onClea
 
   return (
     <section>
-      <button
-        type="button"
-        onClick={onBack}
-        className="mb-4 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
-      >
-        ← 계획으로 돌아가기
-      </button>
       <SectionTitle eyebrow="Feedback">실제 사용량 기록 — 예상 vs 실제</SectionTitle>
       <p className="mb-3 text-sm text-slate-600">
         Claude Code로 개발해 보고 기능별로 실제로 쓴 사용량을 입력하세요. 같은 종류의 기능(로그인·검색 등)은 다음 프로젝트에서
@@ -218,7 +211,7 @@ export function FeedbackPanel({ project, rows, records, onSave, onRemove, onClea
           >
             <span>{notice}</span>
             <button type="button" onClick={onBack} className="font-semibold underline underline-offset-2">
-              계획 화면에서 확인
+              결과 페이지에서 확인
             </button>
           </div>
         )}
