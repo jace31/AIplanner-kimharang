@@ -27,8 +27,8 @@ export interface PrdAnalysis {
   projectName: string;
   summary: string;
   tasks: AnalyzedTask[];
-  /** 분석 방식: LLM 또는 API 키 없이 동작하는 간이(규칙 기반) 분석 */
-  source: "llm" | "heuristic";
+  /** 분석 방식: LLM / 규칙 기반 간이 분석 / 샘플 PRD용으로 미리 준비한 결과(API 호출 없음) */
+  source: "llm" | "heuristic" | "sample";
   provider?: "gemini" | "anthropic";
   model?: string;
 }

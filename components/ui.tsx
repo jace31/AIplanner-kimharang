@@ -25,11 +25,11 @@ export const CONFIDENCE_LABEL: Record<Confidence, string> = {
 };
 
 const TONES = {
-  neutral: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  accent: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
-  good: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  warn: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  bad: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
+  neutral: "bg-slate-100 text-slate-700",
+  accent: "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200",
+  good: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200",
+  warn: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200",
+  bad: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200",
 } as const;
 
 export type Tone = keyof typeof TONES;
@@ -65,45 +65,86 @@ export function UsageBar({ used, capacity, label }: { used: number; capacity: nu
       aria-valuemin={0}
       aria-valuemax={capacity}
       aria-valuenow={used}
-      className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+      className="h-3 w-full overflow-hidden rounded-full bg-slate-100"
     >
       <div
-        className={`h-full rounded-full ${over ? "bg-rose-500" : "bg-indigo-500"}`}
+        className={`h-full rounded-full ${over ? "bg-red-500" : "bg-indigo-600"}`}
         style={{ width: `${Math.min(100, ratio * 100)}%` }}
       />
     </div>
   );
 }
 
+/** 기본 패딩(p-5)이 있고, className에 p-*를 넘기면 기본 패딩을 빼서 서로 충돌하지 않게 한다 */
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const padding = /(^|\s)p-\d/.test(className) ? "" : "p-5";
   return (
-    <div
-      className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 ${className}`}
-    >
-      {children}
-    </div>
+    <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${padding} ${className}`}>{children}</div>
   );
 }
 
 export function SectionTitle({ eyebrow, children }: { eyebrow?: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      {eyebrow && (
-        <div className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-          {eyebrow}
-        </div>
-      )}
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{children}</h2>
+      {eyebrow && <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">{eyebrow}</div>}
+      <h2 className="text-xl font-bold text-slate-900">{children}</h2>
     </div>
   );
 }
 
-export function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
+/** 라벨이 위, 큰 숫자가 아래인 지표 블록. 숫자가 이 화면의 주인공이다. */
+export function Stat({
+  label,
+  value,
+  sub,
+  valueClass = "text-slate-900",
+}: {
+  label: string;
+  value: React.ReactNode;
+  sub?: React.ReactNode;
+  valueClass?: string;
+}) {
   return (
     <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-      <div className="mt-0.5 text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100">{value}</div>
-      {sub && <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{sub}</div>}
+      <div className="text-xs font-semibold text-slate-500">{label}</div>
+      <div className={`mt-1 text-3xl font-extrabold tabular-nums leading-tight ${valueClass}`}>{value}</div>
+      {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
     </div>
+  );
+}
+
+/** 작은 "?" 도움말 버튼. 누르면 onClick으로 도움말 팝업을 연다. */
+export function HelpButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-haspopup="dialog"
+      title={label}
+      className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white text-xs font-bold leading-none text-slate-600 transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+    >
+      ?
+    </button>
+  );
+}
+
+export function PencilIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden className={className}>
+      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+    </svg>
+  );
+}
+
+export function InfoIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden className={className}>
+      <path
+        fillRule="evenodd"
+        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+        clipRule="evenodd"
+      />
+    </svg>
   );
 }

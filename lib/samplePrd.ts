@@ -1,3 +1,7 @@
+/** 줄바꿈 종류와 앞뒤 공백 차이는 무시하고 샘플 PRD와 같은 내용인지 판별한다 */
+export const isSamplePrd = (prd: string): boolean =>
+  prd.replace(/\r\n/g, "\n").trim() === SAMPLE_PRD.replace(/\r\n/g, "\n").trim();
+
 export const SAMPLE_PRD = `# 스터디메이트 — 스터디 그룹 매칭 서비스
 
 대학생과 직장인이 관심 주제와 일정에 맞는 스터디를 찾고, 개설하고, 꾸준히 참여하도록 돕는 웹서비스입니다. 사용자는 계정을 만들고 스터디를 검색해 참여하며, 참여 기록을 바탕으로 맞춤 추천을 받습니다.

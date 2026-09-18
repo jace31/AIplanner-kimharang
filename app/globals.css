@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
+/* 항상 밝은(흰색) 화면. OS 다크 모드 설정과 무관하게 라이트로 고정한다. */
 :root {
-  --background: #f8fafc;
+  color-scheme: light;
+  --background: #ffffff;
   --foreground: #0f172a;
 }
 
@@ -10,13 +12,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans), "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "D2Coding", monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #e2e8f0;
-  }
 }
 
 body {

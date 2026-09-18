@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calibrateTasks, makeRecord, summarizeRecords, taskKey, upsertRecords } from "./calibration";
+import { calibrateTasks, globalRatio, makeRecord, summarizeRecords, taskKey, upsertRecords } from "./calibration";
 import type { AnalyzedTask } from "./types";
 
 function task(name: string, min: number, max: number, id = name): AnalyzedTask {
@@ -113,6 +113,30 @@ describe("calibrateTasks", () => {
   it("극단적인 배율은 제한한다", () => {
     const { calibrations } = calibrateTasks([task("로그인", 1, 1)], [rec("로그인", 1, 1, 500)]);
     expect(calibrations.get("로그인")!.ratio).toBeLessThanOrEqual(4);
+  });
+});
+
+describe("globalRatio", () => {
+  it("기록이 없으면 1", () => {
+    expect(globalRatio([])).toBe(1);
+  });
+
+  it("기록 1건(×1.7)이면 사전 표본으로 당겨져 1.7^(1/4) ≈ 1.14 — 도움말에 적힌 예시와 같다", () => {
+    expect(globalRatio([rec("로그인", 8, 12, 17)])).toBeCloseTo(Math.pow(1.7, 1 / 4), 10);
+    expect(globalRatio([rec("로그인", 8, 12, 17)])).toBeCloseTo(1.14, 2);
+  });
+
+  it("기록이 쌓일수록 전체 평균 배율에 가까워진다", () => {
+    const few = globalRatio([1].map((i) => rec("로그인", 10, 10, 20, i)));
+    const many = globalRatio([1, 2, 3, 4, 5, 6, 7, 8].map((i) => rec("로그인", 10, 10, 20, i)));
+    expect(many).toBeGreaterThan(few);
+    expect(many).toBeLessThan(2);
+  });
+
+  it("calibrateTasks가 기록 없는 종류에 적용하는 배율과 같다", () => {
+    const records = [rec("로그인", 8, 12, 17), rec("검색", 10, 10, 15)];
+    const { calibrations } = calibrateTasks([task("통계", 10, 20)], records);
+    expect(calibrations.get("통계")!.ratio).toBeCloseTo(globalRatio(records), 10);
   });
 });
 

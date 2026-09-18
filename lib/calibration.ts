@@ -38,6 +38,23 @@ const MAX_RATIO = 4;
 const GLOBAL_PRIOR = 3;
 /** 오래된 기록일수록 가중치를 낮춘다 (최신 = 1, 그다음 = 0.7, …) */
 const RECENCY_DECAY = 0.7;
+/** 같은 종류 기록 1건일 때의 범위 반폭(±20%). 기록이 n건이면 /√n 로 좁아지되 MIN~MAX 사이로 제한한다. */
+const BASE_HALF_WIDTH = 0.2;
+const MIN_HALF_WIDTH = 0.08;
+const MAX_HALF_WIDTH = 0.4;
+
+/** 도움말 화면이 계산 규칙의 숫자를 그대로 보여주도록 공개한다 (문서와 코드가 어긋나지 않게) */
+export const CALIBRATION_PARAMS = {
+  minRatio: MIN_RATIO,
+  maxRatio: MAX_RATIO,
+  globalPrior: GLOBAL_PRIOR,
+  recencyDecay: RECENCY_DECAY,
+  baseHalfWidth: BASE_HALF_WIDTH,
+  minHalfWidth: MIN_HALF_WIDTH,
+  maxHalfWidth: MAX_HALF_WIDTH,
+  /** 이 개수 이상이면 신뢰도를 '높음'으로 올린다 */
+  highConfidenceSamples: 3,
+} as const;
 
 const mid = (min: number, max: number) => (min + max) / 2;
 const clampRatio = (r: number) => Math.min(MAX_RATIO, Math.max(MIN_RATIO, r));
@@ -110,6 +127,17 @@ export function summarizeRecords(records: UsageRecord[]): { count: number; meanR
 }
 
 /**
+ * 같은 종류의 기록이 없는 기능에 쓰는 "전체 경향" 배율.
+ * 모든 기록 배율의 기하평균을 (기록 수 + GLOBAL_PRIOR)로 나눠 1쪽으로 당기므로, 기록이 적을수록 조금만 반영된다.
+ * (예: 기록 1건이 ×1.7이면 1.7^(1/4) ≈ ×1.14)
+ */
+export function globalRatio(records: UsageRecord[]): number {
+  const valid = records.filter(isValidRecord);
+  if (!valid.length) return 1;
+  return Math.exp(valid.reduce((s, r) => s + Math.log(recordRatio(r)), 0) / (valid.length + GLOBAL_PRIOR));
+}
+
+/**
  * Task 목록에 사용자 기록을 반영한 예상 사용량으로 바꾼다. 입력은 변경하지 않는다.
  * - 같은 종류 기록이 있으면: 최근 기록에 가중한 배율을 그대로 적용하고, 기록이 많고 일관될수록 범위를 좁힌다.
  * - 없으면: 전체 경향 배율(사전 표본으로 1쪽으로 당김)을 약하게 적용한다.
@@ -124,7 +152,7 @@ export function calibrateTasks(
   const calibrations = new Map<string, Calibration>();
   if (!valid.length) return { tasks, calibrations };
 
-  const globalRatio = Math.exp(valid.reduce((s, r) => s + Math.log(recordRatio(r)), 0) / (valid.length + GLOBAL_PRIOR));
+  const gRatio = globalRatio(valid);
 
   const out = tasks.map((t) => {
     if (options.skipIds?.has(t.id)) return t;
@@ -140,7 +168,10 @@ export function calibrateTasks(
       const variance = logs.reduce((s, l, i) => s + weights[i] * (l - mu) ** 2, 0) / wSum;
       const n = matched.length;
       // 반폭: 기록 1건이면 ±20%, 많아질수록 좁아지되 기록끼리 들쭉날쭉하면(표준편차) 넓힌다
-      const halfWidth = Math.min(0.4, Math.max(0.08, 0.2 / Math.sqrt(n), Math.sqrt(variance)));
+      const halfWidth = Math.min(
+        MAX_HALF_WIDTH,
+        Math.max(MIN_HALF_WIDTH, BASE_HALF_WIDTH / Math.sqrt(n), Math.sqrt(variance)),
+      );
       const ratio = Math.exp(mu);
       const center = mid(t.usageMin, t.usageMax) * ratio;
       const usageMin = niceRound(center * (1 - halfWidth));
@@ -150,19 +181,19 @@ export function calibrateTasks(
         ...t,
         usageMin,
         usageMax,
-        confidence: n >= 3 ? ("high" as const) : t.confidence === "low" ? ("medium" as const) : t.confidence,
+        confidence: n >= CALIBRATION_PARAMS.highConfidenceSamples ? ("high" as const) : t.confidence === "low" ? ("medium" as const) : t.confidence,
       };
     }
 
-    if (Math.abs(Math.log(globalRatio)) >= 0.05) {
+    if (Math.abs(Math.log(gRatio)) >= 0.05) {
       calibrations.set(t.id, {
         source: "global",
         samples: valid.length,
-        ratio: globalRatio,
+        ratio: gRatio,
         baseMin: t.usageMin,
         baseMax: t.usageMax,
       });
-      return { ...t, usageMin: niceRound(t.usageMin * globalRatio), usageMax: niceRound(t.usageMax * globalRatio) };
+      return { ...t, usageMin: niceRound(t.usageMin * gRatio), usageMax: niceRound(t.usageMax * gRatio) };
     }
     return t;
   });
