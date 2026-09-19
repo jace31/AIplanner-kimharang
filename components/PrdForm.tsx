@@ -57,14 +57,14 @@ export function PrdForm({
         className="space-y-5"
       >
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between gap-3">
             <label htmlFor="prd" className="text-sm font-medium text-slate-900">
               PRD
             </label>
             <button
               type="button"
               onClick={onSample}
-              className="text-xs font-medium text-indigo-600 hover:underline"
+              className="rounded-lg bg-emerald-700 px-3.5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
             >
               샘플 PRD 불러오기
             </button>
