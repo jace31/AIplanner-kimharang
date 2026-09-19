@@ -1,7 +1,8 @@
 /**
  * LLM provider 선택.
  *  1) LLM_PROVIDER=gemini|anthropic 로 명시하면 그 provider
- *  2) 아니면 GEMINI_API_KEY(또는 GOOGLE_API_KEY)가 있으면 Gemini, 없고 ANTHROPIC_API_KEY가 있으면 Claude
+ *  2) 아니면 GEMINI_API_KEY(또는 GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY)가 있으면 Gemini,
+ *     없고 ANTHROPIC_API_KEY가 있으면 Claude
  *     (둘 다 있으면 예상치 못한 유료 과금을 피하기 위해 무료 티어가 있는 Gemini를 우선한다)
  *  3) 키가 없으면 null → 규칙 기반 간이 분석
  */

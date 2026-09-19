@@ -16,7 +16,12 @@ const DEFAULT_RETRY_DELAYS_MS = [2_000, 5_000];
 const TRANSIENT_STATUS = new Set([500, 502, 503, 504]);
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-export const geminiApiKey = (env: NodeJS.ProcessEnv = process.env) => env.GEMINI_API_KEY || env.GOOGLE_API_KEY || "";
+/**
+ * Gemini 키 환경변수. 공식 SDK들이 쓰는 이름(GEMINI_API_KEY, GOOGLE_API_KEY)과
+ * Vercel AI SDK가 쓰는 이름(GOOGLE_GENERATIVE_AI_API_KEY)을 모두 인식한다.
+ */
+export const geminiApiKey = (env: NodeJS.ProcessEnv = process.env) =>
+  env.GEMINI_API_KEY || env.GOOGLE_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY || "";
 export const geminiModel = (env: NodeJS.ProcessEnv = process.env) =>
   (env.GEMINI_MODEL || GEMINI_DEFAULT_MODEL).replace(/^models\//, "");
 

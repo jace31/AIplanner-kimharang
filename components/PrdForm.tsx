@@ -141,10 +141,12 @@ export function PrdForm({
             ) : mode ? (
               <>
                 {mode.problem ? <span className="text-amber-700">{mode.problem} </span> : null}
-                간이 분석 모드 — 서버에{" "}
-                <code className="rounded bg-slate-100 px-1">GEMINI_API_KEY</code>(또는{" "}
-                <code className="rounded bg-slate-100 px-1">ANTHROPIC_API_KEY</code>)를 설정하면 LLM이
-                분석합니다
+                <strong className="font-semibold text-slate-700">간이 분석 모드</strong> — 이 서버에는 AI(LLM)가
+                연결돼 있지 않아 규칙 기반으로 분석해요. 샘플 PRD는 미리 준비된 결과로 그대로 체험할 수 있어요.
+                <span className="mt-1 block text-slate-500">
+                  운영자 안내: 배포 환경변수 <code className="rounded bg-slate-100 px-1">GEMINI_API_KEY</code>를 설정하고
+                  다시 배포하면 AI가 분석합니다.
+                </span>
               </>
             ) : (
               " "

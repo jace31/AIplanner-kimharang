@@ -28,6 +28,16 @@ cp .env.example .env.local   # Windows PowerShell: copy .env.example .env.local
 - 둘 다 설정하면 무료 티어가 있는 Gemini를 우선 사용합니다. `LLM_PROVIDER=gemini|anthropic`으로 고정할 수 있습니다.
 - ⚠️ **Gemini 무료 티어는 입력 내용이 Google 제품 개선에 사용될 수 있습니다.** 기밀·개인정보가 담긴 PRD는 넣지 마세요. (유료 티어는 사용되지 않는다고 Google이 안내합니다.)
 - 키는 서버에서만 사용되며 브라우저로 전달되지 않습니다.
+- Gemini 키 이름은 `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY` 중 무엇이든 인식합니다.
+
+### Vercel 등에 배포할 때
+
+배포 서버는 **내 컴퓨터의 환경변수를 알지 못합니다.** 로컬에서 AI 분석이 되더라도 배포본에는 따로 설정해야 합니다.
+
+1. 프로젝트 → Settings → Environment Variables에 `GEMINI_API_KEY`를 추가합니다(Production 포함). `NEXT_PUBLIC_` 접두사는 붙이지 마세요. 붙이면 키가 브라우저에 노출됩니다.
+2. 환경변수는 **새 배포부터** 적용되므로 저장한 뒤 Redeploy 합니다.
+3. `https://<배포주소>/api/analyze`를 열어 `"mode":"llm"`이면 연결된 것이고, `"mode":"heuristic"`이면 키가 서버에 전달되지 않은 것입니다(이 경우 첫 화면에 "간이 분석 모드"가 표시됩니다).
+4. AI 분석은 수십 초 걸릴 수 있어 배포 플랫폼의 함수 최대 실행 시간 제한을 확인하세요.
 
 ## 구조
 

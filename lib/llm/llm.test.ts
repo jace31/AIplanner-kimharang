@@ -83,6 +83,15 @@ describe("geminiAnalyze — 요청", () => {
     expect((m.calls[0].init.headers as Record<string, string>)["x-goog-api-key"]).toBe("g-key");
   });
 
+  it("Vercel AI SDK 이름(GOOGLE_GENERATIVE_AI_API_KEY)도 키로 인정한다", async () => {
+    const m = mockFetch(200, okBody(JSON.stringify(analysisJson)));
+    await geminiAnalyze("PRD 본문입니다. 로그인 기능이 필요합니다.", {
+      env: { GOOGLE_GENERATIVE_AI_API_KEY: "vercel-style-key" } as unknown as NodeJS.ProcessEnv,
+      fetchImpl: m.impl,
+    });
+    expect((m.calls[0].init.headers as Record<string, string>)["x-goog-api-key"]).toBe("vercel-style-key");
+  });
+
   it("키가 없으면 요청 없이 오류", async () => {
     const m = mockFetch(200, {});
     await expect(geminiAnalyze("PRD 본문입니다.", { env: {} as NodeJS.ProcessEnv, fetchImpl: m.impl })).rejects.toThrow(
@@ -286,6 +295,9 @@ describe("resolveLlm", () => {
   });
   it("Gemini 키만 있으면 Gemini, 기본 모델", () => {
     expect(resolveLlm(e({ GEMINI_API_KEY: "k" }))).toEqual({ provider: "gemini", model: GEMINI_DEFAULT_MODEL });
+  });
+  it("GOOGLE_GENERATIVE_AI_API_KEY만 있어도 Gemini로 인식한다", () => {
+    expect(resolveLlm(e({ GOOGLE_GENERATIVE_AI_API_KEY: "k" })).provider).toBe("gemini");
   });
   it("Anthropic 키만 있으면 Claude", () => {
     expect(resolveLlm(e({ ANTHROPIC_API_KEY: "k" })).provider).toBe("anthropic");
